@@ -13,10 +13,9 @@ class User(BaseModel):
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
 
-    posts = relationship("Post", back_populates="author")
-    user_notifications = relationship(
-        "UserNotification", back_populates="user"
-    )  # reverse relationship to UserNotification
+    # user_notifications = relationship(
+    #     "UserNotification", back_populates="user"
+    # )  # reverse relationship to UserNotification
     user_roles = relationship(
         "CustomRole", secondary="user_roles", back_populates="users"
     )  # reverse relationship to UserRole

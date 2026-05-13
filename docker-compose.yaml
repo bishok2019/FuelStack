@@ -1,0 +1,48 @@
+services:
+  web:
+    container_name: fuelstack_web
+    build: .
+    working_dir: /app
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: >
+      sh -c "
+      until pg_isready -h db -p 5432; do sleep 1; done &&
+      alembic upgrade head &&
+      uv run fastapi dev main.py
+
+
+      "
+    volumes:
+      - .:/app
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+    ports:
+      - "8001:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    container_name: fuelstack_db
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  static_files:
+  media_files:

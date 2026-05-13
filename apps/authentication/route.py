@@ -1,27 +1,25 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+# from fastapi import APIRouter
 
-from apps.authentication.schemas import Token, UserCreate, UserLogin
-from apps.database import get_db
+# # include user and auth route
+# from apps.authentication.auth_route import router as auth_router
+# from apps.authentication.user_route import router as user_router
 
-router = APIRouter()
+# # mounts auth routes under /authentication/...
+# #  - POST /authentication/register
+# #  - POST /authentication/login
+# router = APIRouter(
+#     # prefix="/authentication",
+#     # tags=["authentication"],
+# )
+# router.include_router(
+#     auth_router,
+#     prefix="/auth",
+#     tags=["auth"],
+# )
 
-
-@router.post("/signup", response_model=Token)
-def signup(payload: UserCreate, db: Session = Depends(get_db)):
-    pass
-
-
-@router.post("/login", response_model=Token)
-def login(payload: UserLogin, db: Session = Depends(get_db)):
-    pass
-
-
-@router.post("/refresh", response_model=Token)
-def refresh_token():
-    pass
-
-
-@router.get("/me")
-def me():
-    pass
+# # mounts users under /authentication/users/...
+# router.include_router(
+#     user_router,
+#     prefix="/users",
+#     tags=["users"],
+# )

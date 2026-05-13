@@ -1,10 +1,12 @@
 from fastapi import APIRouter, FastAPI
+from fastapi.staticfiles import StaticFiles
 
-from apps.authentication.route import router as auth_router
+from apps.authentication.auth_route import router as auth_router
+from apps.authentication.user_route import router as user_router
 
 app = FastAPI(
-    title="FastAPI Learning Project",
-    description="Title",
+    title="FuelStack Project",
+    # description="Title",
     version="1.0.0",
     contact={
         "name": "Bishok Paudel",
@@ -12,12 +14,12 @@ app = FastAPI(
     },
 )
 
-v1_router = APIRouter(prefix="/api/v1")
+app.mount("/static", StaticFiles(directory="staticfiles"), name="static")
+app.mount("/media", StaticFiles(directory="media"), name="media")
 
-v1_router.include_router(
-    auth_router,
-    prefix="/auth",
-    tags=["Authentication"],
-)
+v1_router = APIRouter(prefix="/api/v1")
+v1_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+v1_router.include_router(user_router, prefix="/users", tags=["Users"])
+
 
 app.include_router(v1_router)
