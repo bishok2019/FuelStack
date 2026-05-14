@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from apps.authentication.models import User
-from apps.authentication.schemas import Token, UserCreate, UserLogin
+from apps.authentication.schemas import Token, UserCreate, UserLogin, UserRegister
 from apps.database import get_db
 from base.route import StandardResponse
 
@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=StandardResponse)
-def register(user: UserCreate, db: Session = Depends(get_db)):
+def register(user: UserRegister, db: Session = Depends(get_db)):
     """Register a new user"""
     # Check if user already exists
     existing_user = (

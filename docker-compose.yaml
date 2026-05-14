@@ -10,7 +10,7 @@ services:
       sh -c "
       until pg_isready -h db -p 5432; do sleep 1; done &&
       alembic upgrade head &&
-      uv run fastapi dev main.py
+      uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 
       "
@@ -19,7 +19,7 @@ services:
       - static_files:/app/staticfiles
       - media_files:/app/media
     ports:
-      - "8001:8000"
+      - "8005:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -33,7 +33,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5434:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

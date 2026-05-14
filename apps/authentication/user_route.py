@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from apps.database import get_db
-from base.pagination import paginate
+from base.pagination import get_pagination_params, paginate
 from base.route import StandardResponse
 
 from .models import User
@@ -56,15 +56,15 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.get("/list", response_model=StandardResponse)
 def get_users(
-    page: int = 1,  # we are passing page and page_size in paginate() directly
-    page_size: int = 1,
+    # page: int = 1,  # we are passing page and page_size in paginate() directly
+    # page_size: int = 1,
     db: Session = Depends(get_db),
+    pagination=Depends(get_pagination_params),
 ):
     """Get all users with pagination"""
     result = paginate(
         query=db.query(User),
-        page=page,  # we are passing page and page_size in paginate() directly
-        page_size=page_size,
+        pagination=pagination,
         schema=UserList,
     )
     return JSONResponse(
@@ -94,5 +94,45 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
         content=StandardResponse.success_response(
             data=UserRetrieve.model_validate(user),
             message="User retrieved successfully.",
+        ).model_dump(),
+    )
+
+
+@router.patch("/update/{user_id}", response_model=StandardResponse)
+def update_user(
+    user_id: int,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+):
+    """Update a specific user by ID"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=StandardResponse.error_response(
+                message="User not found.",
+            ).model_dump(),
+        )
+
+    # Update fields if provided
+    if user_update.username is not None:
+        user.username = user_update.username
+    if user_update.email is not None:
+        user.email = user_update.email
+    if user_update.password is not None:
+        user.hashed_password = hash_password(user_update.password)
+    if user_update.is_active is not None:
+        user.is_active = user_update.is_active
+    if user_update.is_superuser is not None:
+        user.is_superuser = user_update.is_superuser
+
+    db.commit()
+    db.refresh(user)
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=StandardResponse.success_response(
+            data=UserRetrieve.model_validate(user),
+            message="User updated successfully.",
         ).model_dump(),
     )

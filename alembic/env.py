@@ -9,6 +9,7 @@ from alembic import context
 from apps.authentication.models import User
 from apps.database import Base
 from apps.dealers.models import Brand, Dealer, Hub
+from apps.inventory.models import Inventory
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

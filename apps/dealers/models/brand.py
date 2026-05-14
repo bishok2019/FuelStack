@@ -13,3 +13,4 @@ class Brand(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False)
 
     # relationships
+    inventories = relationship("Inventory", back_populates="brand")

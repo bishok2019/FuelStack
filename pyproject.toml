@@ -7,9 +7,9 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.18.4",
     "fastapi[standard]>=0.136.1",
-    "jwt>=1.4.0",
     "passlib[argon2]>=1.7.4",
     "psycopg2-binary>=2.9.12",
+    "pyjwt>=2.12.1",
     "python-decouple>=3.8",
     "sqlalchemy>=2.0.49",
 ]

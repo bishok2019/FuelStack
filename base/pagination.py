@@ -56,12 +56,13 @@ def paginate(
     page_size = pagination.page_size
 
     if page < 1:
-        raise [HTTPException(status_code=400, detail="page must be >= 1")]
+        raise HTTPException(status_code=400, detail="page must be >= 1")
         # raise ValueError("page must be >= 1")
     if page_size < 1 or page_size > 100:
-        raise [
-            HTTPException(status_code=400, detail="page_size must be between 1 and 100")
-        ]
+        raise HTTPException(
+            status_code=400, detail="page_size must be between 1 and 100"
+        )
+
         # raise ValueError("page_size must be between 1 and 100")
 
     total = query.count()

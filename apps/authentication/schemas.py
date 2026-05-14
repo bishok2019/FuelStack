@@ -8,8 +8,14 @@ class UserBase(BaseModel):
     email: EmailStr
 
 
+class UserRegister(UserBase):
+    password: str
+
+
 class UserCreate(UserBase):
     password: str
+    is_active: Optional[bool] = True
+    is_superuser: Optional[bool] = False
 
 
 class UserList(UserBase):
@@ -21,6 +27,8 @@ class UserList(UserBase):
 
 class UserRetrieve(UserBase):
     id: int
+    is_active: bool
+    is_superuser: bool
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -28,6 +36,8 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_superuser: Optional[bool] = None
 
 
 class Token(BaseModel):
