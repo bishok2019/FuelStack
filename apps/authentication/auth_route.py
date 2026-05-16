@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from apps.authentication.models import User
@@ -27,10 +26,16 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
         .first()
     )
     if existing_user:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content=StandardResponse.error_response(
-                message="Username or email already registered"
+            detail=StandardResponse.error_response(
+                message="Username or email already registered",
+                errors=[
+                    {
+                        "field": "username/email",
+                        "message": "Username or email already registered",
+                    }
+                ],
             ).model_dump(),
         )
 
@@ -47,16 +52,13 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
 
-    return JSONResponse(
-        status_code=status.HTTP_201_CREATED,
-        content=StandardResponse.success_response(
-            data={
-                "id": db_user.id,
-                "username": db_user.username,
-                "email": db_user.email,
-            },
-            message="User registered successfully",
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data={
+            "id": db_user.id,
+            "username": db_user.username,
+            "email": db_user.email,
+        },
+        message="User registered successfully",
     )
 
 
@@ -67,17 +69,18 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == user_credentials.username).first()
 
     if not user or not verify_password(user_credentials.password, user.hashed_password):
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            content=StandardResponse.error_response(
-                message="Invalid username or password"
+            detail=StandardResponse.error_response(
+                # message="Invalid username or password",
+                error="Invalid credentials",
             ).model_dump(),
         )
 
     if not user.is_active:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="Inactive user account"
             ).model_dump(),
         )
@@ -86,21 +89,18 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data={
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-                "token_type": "bearer",
-                "user": {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                },
-                "roles": [role.name for role in user.user_roles],
-                "permissions": [perm.code_name for perm in user.user_permissions],
+    return StandardResponse.success_response(
+        data={
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
             },
-            message="Login successful",
-        ).model_dump(),
+            "roles": [role.name for role in user.user_roles],
+            "permissions": [perm.code_name for perm in user.user_permissions],
+        },
+        message="Login successful",
     )

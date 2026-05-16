@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from apps.database import get_db
@@ -29,13 +28,10 @@ def list_api_logs(
         # pagination=Depends(get_pagination_params),
     )
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=result.data,
-            message="API logs fetched successfully.",
-            meta=result.meta,
-        ).model_dump(mode="json"),
+    return StandardResponse.success_response(
+        data=result.data,
+        message="API logs fetched successfully.",
+        meta=result.meta,
     )
 
 
@@ -47,20 +43,17 @@ def retrieve_api_logs(
     """Retrieve a specific API log by ID"""
     result = db.query(APILog).filter(APILog.id == log_id).first()
     if not result:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="API log not found.",
             ).model_dump(),
         )
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=APILogRetrieve.model_validate(result),
-            message="API logs retrieved successfully.",
-            # meta=result.meta,
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=APILogRetrieve.model_validate(result),
+        message="API logs retrieved successfully.",
+        # meta=result.meta,
     )
 
 
@@ -80,20 +73,17 @@ def list_error_logs(
         schema=ErrorLogList,
     )
     if not result.data:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="No error logs found.",
             ).model_dump(),
         )
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=result.data,
-            message="Error logs fetched successfully.",
-            meta=result.meta,  # to show pagination meta in response
-        ).model_dump(mode="json"),
+    return StandardResponse.success_response(
+        data=result.data,
+        message="Error logs fetched successfully.",
+        meta=result.meta,  # to show pagination meta in response
     )
 
 
@@ -105,17 +95,14 @@ def retrieve_error_log(
     """Retrieve a specific error log by ID"""
     result = db.query(ErrorLog).filter(ErrorLog.id == log_id).first()
     if not result:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="Error log not found.",
             ).model_dump(),
         )
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=ErrorLogRetrieve.model_validate(result),
-            message="Error log retrieved successfully.",
-        ).model_dump(mode="json"),
+    return StandardResponse.success_response(
+        data=ErrorLogRetrieve.model_validate(result),
+        message="Error log retrieved successfully.",
     )

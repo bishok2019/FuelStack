@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from apps.database import get_db
@@ -14,29 +13,29 @@ router = APIRouter()
 
 
 @router.post(
-    "/create", response_model=StandardResponse, status_code=status.HTTP_201_CREATED
+    "/create",
+    response_model=StandardResponse,
+    status_code=status.HTTP_201_CREATED,
 )
-def create_inventory(inventory: InventoryCreate, db: Session = Depends(get_db)):
+def create_inventory(
+    inventory: InventoryCreate,
+    db: Session = Depends(get_db),
+):
     """Create a new inventory record"""
     brand = db.query(Brand).filter(Brand.id == inventory.brand_id).first()
     if not brand:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content=StandardResponse.error_response(
-                message="Invalid brand_id"
-            ).model_dump(),
+            detail="Invalid brand_id provided",
         )
     db_inventory = Inventory(**inventory.model_dump())
     db.add(db_inventory)
     db.commit()
     db.refresh(db_inventory)
 
-    return JSONResponse(
-        status_code=status.HTTP_201_CREATED,
-        content=StandardResponse.success_response(
-            data=InventoryRetrieve.model_validate(db_inventory),
-            message="Inventory created successfully",
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=InventoryRetrieve.model_validate(db_inventory),
+        message="Inventory created successfully",
     )
 
 
@@ -55,11 +54,10 @@ def list_inventory(
         pagination=pagination,
         schema=InventoryList,
     )
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=result.data, message="Inventory fetched successfully", meta=result.meta
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=result.data,
+        message="Inventory fetched successfully",
+        meta=result.meta,
     )
 
 
@@ -68,19 +66,16 @@ def retrieve_inventory(inventory_id: int, db: Session = Depends(get_db)):
     """Retrieve a specific inventory record by ID"""
     inventory = db.query(Inventory).filter(Inventory.id == inventory_id).first()
     if not inventory:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="Inventory record not found"
             ).model_dump(),
         )
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=InventoryRetrieve.model_validate(inventory),
-            message="Inventory retrieved successfully",
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=InventoryRetrieve.model_validate(inventory),
+        message="Inventory retrieved successfully",
     )
 
 
@@ -91,9 +86,9 @@ def patch_inventory(
     """Partially update an inventory record"""
     inventory = db.query(Inventory).filter(Inventory.id == inventory_id).first()
     if not inventory:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="Inventory record not found"
             ).model_dump(),
         )
@@ -105,12 +100,9 @@ def patch_inventory(
     db.commit()
     db.refresh(inventory)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=InventoryRetrieve.model_validate(inventory),
-            message="Inventory updated successfully",
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=InventoryRetrieve.model_validate(inventory),
+        message="Inventory updated successfully",
     )
 
 
@@ -119,9 +111,9 @@ def delete_inventory(inventory_id: int, db: Session = Depends(get_db)):
     """Delete an inventory record"""
     inventory = db.query(Inventory).filter(Inventory.id == inventory_id).first()
     if not inventory:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="Inventory record not found"
             ).model_dump(),
         )
@@ -129,9 +121,7 @@ def delete_inventory(inventory_id: int, db: Session = Depends(get_db)):
     db.delete(inventory)
     db.commit()
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=None, message="Inventory deleted successfully"
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=None,
+        message="Inventory deleted successfully",
     )

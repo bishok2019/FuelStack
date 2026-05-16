@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from apps.database import get_db
@@ -25,9 +24,9 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         .first()
     )
     if existing_user:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="Username or email already registered."
             ).model_dump(),
         )
@@ -45,12 +44,9 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
 
-    return JSONResponse(
-        status_code=status.HTTP_201_CREATED,
-        content=StandardResponse.success_response(
-            data=UserRetrieve.model_validate(db_user),
-            message="User created successfully.",
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=UserRetrieve.model_validate(db_user),
+        message="User created successfully.",
     )
 
 
@@ -67,13 +63,10 @@ def get_users(
         pagination=pagination,
         schema=UserList,
     )
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=result.data,
-            message="Users fetched successfully.",
-            meta=result.meta,
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=result.data,
+        message="Users fetched successfully.",
+        meta=result.meta,
     )
 
 
@@ -82,19 +75,16 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     """Get a specific user by ID"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="User not found.",
             ).model_dump(),
         )
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=UserRetrieve.model_validate(user),
-            message="User retrieved successfully.",
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=UserRetrieve.model_validate(user),
+        message="User retrieved successfully.",
     )
 
 
@@ -105,12 +95,27 @@ def update_user(
     db: Session = Depends(get_db),
 ):
     """Update a specific user by ID"""
+    existing_user = (
+        db.query(User)
+        .filter(
+            (User.username == user_update.username) | (User.email == user_update.email)
+        )
+        .first()
+    )
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=StandardResponse.error_response(
+                message="Username or email already registered."
+            ).model_dump(),
+        )
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        return JSONResponse(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=StandardResponse.error_response(
+            detail=StandardResponse.error_response(
                 message="User not found.",
+                error="User not found.",
             ).model_dump(),
         )
 
@@ -129,10 +134,7 @@ def update_user(
     db.commit()
     db.refresh(user)
 
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=StandardResponse.success_response(
-            data=UserRetrieve.model_validate(user),
-            message="User updated successfully.",
-        ).model_dump(),
+    return StandardResponse.success_response(
+        data=UserRetrieve.model_validate(user),
+        message="User updated successfully.",
     )
