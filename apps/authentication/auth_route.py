@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from apps.authentication.models import User
+from apps.authentication.models import User, UserType
 from apps.authentication.schemas import Token, UserCreate, UserLogin, UserRegister
+from apps.customer.models import Customer
 from apps.database import get_db
 from base.route import StandardResponse
 
@@ -51,6 +52,13 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    if db_user.user_type == UserType.CUSTOMER:
+        customer_profile = Customer(
+            user_id=db_user.id,
+            # Add other customer fields here from user or request if needed
+        )
+        db.add(customer_profile)
+        db.commit()
 
     return StandardResponse.success_response(
         data={

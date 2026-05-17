@@ -1,8 +1,15 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table
+import enum
+
+from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 
 from apps.database import Base
 from base.models import BaseModel
+
+
+class UserType(enum.Enum):
+    CUSTOMER = "customer"
+    SYSTEM = "system"
 
 
 class User(BaseModel):
@@ -12,6 +19,7 @@ class User(BaseModel):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
+    user_type = Column(Enum(UserType), default=UserType.SYSTEM, nullable=False)
 
     # user_notifications = relationship(
     #     "UserNotification", back_populates="user"
@@ -22,6 +30,8 @@ class User(BaseModel):
     user_permissions = relationship(
         "CustomPermission", secondary="user_permissions", back_populates="users"
     )  # reverse relationship to UserPermission
+
+    customer = relationship("Customer", uselist=False, back_populates="user")
 
 
 # Association tables for many-to-many relationships
